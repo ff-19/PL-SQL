@@ -1,0 +1,60 @@
+Create table Borrower(
+    Roll_no number(15),
+    Name varchar(255),
+    DateOfIssue date,
+    NameOfBook varchar(255),
+    Status varchar(255),
+    Primary key(Roll_no)
+ );
+
+
+ Create table Fine (
+    Roll_no number(15),
+    DateOfReturn date,
+ Amount number(15),
+    Foreign key(Roll_no) references Borrower(Roll_no)
+ );
+
+
+ insert into Borrower (Roll_no, Name, DateOfIssue, NameOfBook, Status) values (1, 'Tushar', 
+TO_DATE('2024-07-28','YYYY-MM-DD'), 'DBMS', 'I');
+ insert into Borrower (Roll_no, Name, DateOfIssue, NameOfBook, Status) values (2, 'Ranjeet', 
+TO_DATE('2024-07-01','YYYY-MM-DD'),'IOT', 'I');
+ insert into Borrower (Roll_no, Name, DateOfIssue, NameOfBook, Status) values (3, 'Shyam', 
+TO_DATE('2024-08-05','YYYY-MM-DD'), 'TOC', 'I');
+
+
+ Declare
+ p_nameofbook varchar(255);
+ p_rollno number(15);
+ p_dateofissue date;
+ currentdate date;
+ noofdays number(15);
+ amount number(15);
+ nodata exception;
+ Begin
+ p_rollno := &p_rollno;
+ p_nameofbook := '&p_nameofbook';
+currentdate := SYSDATE;
+ IF p_rollno <= 0 THEN RAISE nodata;
+ END IF;
+ SELECT DateOfIssue into p_dateofissue from Borrower where Roll_no = p_rollno AND 
+NameOfBook = p_nameofbook;
+ select TRUNC(SYSDATE) - p_dateofissue INTO noofdays from dual;
+ dbms_output.put_line('No of days: ' || noofdays);
+ IF (noofdays > 30) THEN amount := noofdays * 50;
+ ELSIF (noofdays >= 15 AND noofdays <= 30) THEN amount := noofdays * 5;
+ END IF;
+ IF amount > 0 then insert into Fine(Roll_no, DateOfReturn, Amount) values (p_rollno, SYSDATE, 
+amount);
+ END IF;
+ IF amount > 0 then UPDATE Borrower SET Status = 'R' where Roll_no = p_rollno;
+ END IF;
+ EXCEPTION
+ When nodata then dbms_output.put_line('Roll no not found!!!');
+ END;
+ /
+
+
+ SELECT * FROM Borrower;
+ SELECT * FROM FINE

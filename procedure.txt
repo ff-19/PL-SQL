@@ -1,0 +1,52 @@
+CREATE TABLE stud_marks(roll_no number(20),name varchar(20),total_marks number(20));
+INSERT INTO stud_marks VALUES(1,'atharva',1200);
+INSERT INTO stud_marks VALUES(2,'om',950);
+INSERT INTO stud_marks VALUES(3,'booh',850);
+INSERT INTO stud_marks VALUES(4,'utk',800);
+
+SELECT * FROM stud_marks;
+CREATE TABLE result(roll_no number(20),name varchar2(20),class varchar2(20));
+
+CREATE OR REPLACE PROCEDURE proc_grade(
+    var_rollno IN number, 
+    p_rollno OUT stud_marks.roll_no%type,
+    p_name OUT stud_marks.name%type,
+    p_total OUT stud_marks.total_marks%type
+)
+AS
+BEGIN
+    -- Fetch student details
+    SELECT roll_no, name, total_marks 
+    INTO p_rollno, p_name, p_total 
+    FROM stud_marks 
+    WHERE roll_no = var_rollno;
+
+    -- Check the total marks and classify the student
+    IF p_total >= 900 AND p_total <= 1500 THEN
+        INSERT INTO result VALUES(p_rollno, p_name, 'distinction');
+    ELSIF p_total >= 825 AND p_total < 900 THEN
+        INSERT INTO result VALUES(p_rollno, p_name, 'first class');
+    ELSIF p_total >= 700 AND p_total < 825 THEN
+        INSERT INTO result VALUES(p_rollno, p_name, 'HSC');
+    ELSE
+        INSERT INTO result VALUES(p_rollno, p_name, 'fail');
+    END IF;
+
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        dbms_output.put_line('roll_no ' || var_rollno || ' not found');
+    WHEN OTHERS THEN
+        dbms_output.put_line('An unexpected error occurred: ' || SQLERRM);
+END;
+/
+DECLARE
+    v_rollno stud_marks.roll_no%TYPE;
+    v_name   stud_marks.name%TYPE;
+    v_total  stud_marks.total_marks%TYPE;
+BEGIN
+    -- Call the procedure with a roll number
+    proc_grade(1, v_rollno, v_name, v_total);
+    -- Optionally, you can check the values of v_rollno, v_name, and v_total here
+END;
+/
+SELECT * FROM result;

@@ -1,0 +1,56 @@
+-- Library table: stores book information
+
+CREATE TABLE Library (
+    book_id NUMBER PRIMARY KEY,
+    book_title VARCHAR2(100),
+    author_name VARCHAR2(100),
+    published_date DATE
+);
+
+-- Library_Audit table: stores audit records for updates and deletes
+
+CREATE TABLE Library_Audit (
+    audit_id NUMBER PRIMARY KEY,
+    book_id NUMBER,
+    book_title VARCHAR2(100),
+    author_name VARCHAR2(100),
+    published_date DATE,
+    operation_type VARCHAR2(10), -- 'UPDATE' or 'DELETE'
+    operation_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Trigger for capturing updates and deletes on the Library table
+
+CREATE OR REPLACE TRIGGER trg_library_audit
+    BEFORE DELETE OR UPDATE ON Library
+    FOR EACH ROW
+BEGIN
+    -- Check if the operation is an UPDATE
+    IF UPDATING THEN
+        INSERT INTO Library_Audit (book_id, book_title, author_name, published_date, operation_type)
+        VALUES (:OLD.book_id, :OLD.book_title, :OLD.author_name, :OLD.published_date, 'UPDATE');
+        
+    -- Check if the operation is a DELETE
+    ELSIF DELETING THEN
+        INSERT INTO Library_Audit (book_id, book_title, author_name, published_date, operation_type)
+        VALUES (:OLD.book_id, :OLD.book_title, :OLD.author_name, :OLD.published_date, 'DELETE');
+    END IF;
+END trg_library_audit;
+/
+
+
+
+
+-- Trigger for capturing inserts on the Library table
+
+
+CREATE OR REPLACE TRIGGER trg_library_insert_audit
+    BEFORE INSERT ON Library
+    FOR EACH ROW
+BEGIN
+    -- Insert the new values into the Library_Audit table
+    INSERT INTO Library_Audit (book_id, book_title, author_name, published_date, operation_type)
+    VALUES (:NEW.book_id, :NEW.book_title, :NEW.author_name, :NEW.published_date, 'INSERT');
+END trg_library_insert_audit;
+/
+

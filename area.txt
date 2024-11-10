@@ -1,0 +1,19 @@
+CREATE TABLE areas(
+    radius int,
+    area int
+);
+
+DECLARE 
+v_radius int;
+v_area int;
+BEGIN
+FOR v_radius IN 5..9 LOOP
+v_area:=3.14*v_radius*v_radius;
+INSERT INTO areas VALUES(v_radius,v_area);
+END LOOP;
+dbms_output.put_line('here area is calculated ');
+END;
+/
+
+SELECT * FROM areas;
+
