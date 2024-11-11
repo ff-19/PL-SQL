@@ -1,0 +1,73 @@
+-- Create N_RollCall table
+CREATE TABLE N_RollCall (
+    student_id NUMBER PRIMARY KEY,
+    student_name VARCHAR2(100),
+    roll_call_date DATE
+);
+
+-- Create O_RollCall table
+CREATE TABLE O_RollCall (
+    student_id NUMBER PRIMARY KEY,
+    student_name VARCHAR2(100),
+    roll_call_date DATE
+);
+
+SELECT table_name FROM user_tables WHERE table_name IN ('N_ROLLCALL', 'O_ROLLCALL');
+SELECT * FROM all_tables WHERE table_name IN ('N_ROLLCALL', 'O_ROLLCALL');
+
+
+DECLARE
+    -- Declare the cursor with parameters (using student_id)
+    CURSOR cur_roll_call (p_student_id IN NUMBER) IS
+        SELECT student_id, student_name, roll_call_date
+        FROM N_RollCall
+        WHERE student_id = p_student_id;  -- Filter by the student_id
+
+    -- Declare variables to hold the data from the cursor
+    v_student_id NUMBER;
+    v_student_name VARCHAR2(100);
+    v_roll_call_date DATE;
+    
+BEGIN
+    -- Loop through the N_RollCall table based on student_id and insert into O_RollCall if not exists
+    FOR p_student_id IN (SELECT DISTINCT student_id FROM N_RollCall) LOOP
+        OPEN cur_roll_call(p_student_id.student_id);  -- Open the cursor with the current student_id
+        
+        -- Fetch the data from the cursor
+        FETCH cur_roll_call INTO v_student_id, v_student_name, v_roll_call_date;
+        
+        -- If there's data to insert and no matching record in O_RollCall, perform the insert
+        IF cur_roll_call%FOUND THEN
+            -- Check if the record already exists in O_RollCall
+            DECLARE
+                v_exists NUMBER;
+            BEGIN
+                -- Check if the record already exists in O_RollCall
+                SELECT COUNT(*)
+                INTO v_exists
+                FROM O_RollCall
+                WHERE student_id = v_student_id;
+
+                -- If the record does not exist, insert it into O_RollCall
+                IF v_exists = 0 THEN
+                    INSERT INTO O_RollCall (student_id, student_name, roll_call_date)
+                    VALUES (v_student_id, v_student_name, v_roll_call_date);
+                    COMMIT;  -- Commit after each insert
+                END IF;
+            END;
+        END IF;
+        
+        -- Close the cursor after processing the student_id
+        CLOSE cur_roll_call;
+    END LOOP;
+
+    -- Exception handling for any errors
+EXCEPTION
+    WHEN OTHERS THEN
+        -- Rollback in case of any error
+        ROLLBACK;
+        DBMS_OUTPUT.PUT_LINE('Error: ' || SQLERRM);
+END;
+/
+
+
